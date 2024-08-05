@@ -1,0 +1,24 @@
+# Use the official Python image from the Docker Hub
+FROM python:3.10
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the requirements file into the container
+COPY requirements.txt /app/
+
+# Install the dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire Django project into the container
+COPY . /app/
+
+# Expose the port the app runs on
+EXPOSE 8000
+
+# Ensure the Eureka server is up before running the Django server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
+  CMD curl -f http://eureka-server:8761/eureka/apps || exit 1
+
+# Run the migrations and then start the Django development server
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"]
